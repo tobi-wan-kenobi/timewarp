@@ -1,7 +1,10 @@
+import uuid
+
 import timewarp.exceptions
 
 class Snapshot(object):
-    pass
+    def __init__(self, uid=None):
+        self.id = uid if uid else str(uuid.uuid4())
 
 class VirtualMachine(object):
     def create_snapshot(self, name=None):

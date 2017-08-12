@@ -19,9 +19,6 @@ class Session(object):
 class Snapshot(timewarp.adapter.Snapshot):
     pass
 
-class Snapshot(timewarp.adapter.Snapshot):
-    pass
-
 class VirtualMachine(timewarp.adapter.VirtualMachine):
     def __init__(self, instance_id):
         if not instance_id:
@@ -33,6 +30,22 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             raise timewarp.exceptions.NoSuchVirtualMachine()
 
     def list_snapshots(self):
-        return [ Snapshot() ]
+        retval = {}
+        paginator = Session.client("ec2").get_paginator("describe_snapshots")
+        it = paginator.paginate(
+            Filters=[
+                {"Name": "tag-key", "Values": ["timewarp:snapshot_id"]},
+                {"Name": "tag:timewarp:instance", "Values":[self._inst.id]},
+            ],
+        )
+        for data in it:
+            for snapshot in data["Snapshots"]:
+                snapshot_id = next((tag["Value"] for tag in snapshot["Tags"] if tag["Key"] == "timewarp:snapshot_id"), None)
+                if snapshot_id:
+                    temp = retval.get(snapshot_id, Snapshot(snapshot_id))
+                    temp.time = snapshot["StartTime"]
+                    retval[temp.id] = temp
+
+        return sorted(retval.itervalues(), key=lambda b: b.time)
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
