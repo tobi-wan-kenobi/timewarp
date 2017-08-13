@@ -36,6 +36,9 @@ class TestEc2List(unittest.TestCase):
             ]
         }
 
+    def tearDown(self):
+        self.boto3.teardown()
+
     def test_listSingleSnapshot(self):
         self.boto3.paginator().paginate.return_value = [{
             "Snapshots": [ self.someSnapshot ]

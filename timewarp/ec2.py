@@ -48,4 +48,21 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
 
         return sorted(retval.itervalues(), key=lambda b: b.time)
 
+    def create_snapshot(self, name=None):
+        snapshot = Snapshot()
+        self._inst.reload()
+        for volume in self._inst.volumes.all():
+            snap = volume.create_snapshot()
+            snap.create_tags(
+                Tags=[
+                    {"Key": "timewarp:instance", "Value": self._inst.id},
+                    {"Key": "timewarp:snapshot_id", "Value": snapshot.id},
+                    {"Key": "timewarp:volume_id", "Value": volume.id},
+                ]
+            )
+            if name:
+                snap.create_tags(Tags=[{"Key": "Name", "Value": name}])
+            snapshot.time = snap.start_time
+        return snapshot
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
