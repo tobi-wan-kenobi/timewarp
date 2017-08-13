@@ -34,6 +34,7 @@ class TestEc2Create(unittest.TestCase):
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
                 {"Key": "timewarp:snapshot_id", "Value": snap.id},
                 {"Key": "timewarp:volume_id", "Value": self.volume.id},
+                {"Key": "Name", "Value": "Timewarp Snapshot"},
             ]
         )
 
@@ -47,10 +48,11 @@ class TestEc2Create(unittest.TestCase):
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
                 {"Key": "timewarp:snapshot_id", "Value": snap.id},
                 {"Key": "timewarp:volume_id", "Value": self.volume.id},
+                {"Key": "Name", "Value": "Timewarp Snapshot"},
             ]
         )
         self.snapshot.create_tags.assert_any_call(
-            Tags=[{"Key": "Name", "Value": self.anySnapshotName}]
+            Tags=[{"Key": "timewarp:name", "Value": self.anySnapshotName}]
         )
 
     def test_createMultiVolumeSnapshot(self):

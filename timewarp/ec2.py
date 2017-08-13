@@ -58,10 +58,11 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                     {"Key": "timewarp:instance", "Value": self._inst.id},
                     {"Key": "timewarp:snapshot_id", "Value": snapshot.id},
                     {"Key": "timewarp:volume_id", "Value": volume.id},
+                    {"Key": "Name", "Value": "Timewarp Snapshot"}
                 ]
             )
             if name:
-                snap.create_tags(Tags=[{"Key": "Name", "Value": name}])
+                snap.create_tags(Tags=[{"Key": "timewarp:name", "Value": name}])
             snapshot.time = snap.start_time
         return snapshot
 
