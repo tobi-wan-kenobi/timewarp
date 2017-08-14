@@ -66,4 +66,7 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             snapshot.time = snap.start_time
         return snapshot
 
+    def restore_snapshot(self, snapshot, force=False):
+        pass
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

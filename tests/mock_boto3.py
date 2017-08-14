@@ -6,9 +6,10 @@ class Boto3Mock(object):
     def __init__(self):
         self._session = mock.patch("timewarp.ec2.Session").start()
 
+        self._instances = {}
+
         self._resource = mock.Mock()
-        self._instance = mock.Mock()
-        self._resource.Instance.return_value = self._instance
+        self._resource.Instance = self.Instance
         self._session.resource.return_value = self._resource
 
         self._client = mock.Mock()
@@ -20,8 +21,11 @@ class Boto3Mock(object):
     def paginator(self):
         return self._paginator
 
-    def instance(self):
-        return self._instance
+    def Instance(self, instance_id):
+        inst = self._instances.get(instance_id, mock.Mock())
+        self._instances[instance_id] = inst
+        inst.id = instance_id
+        return inst
 
     def teardown(self):
         self._session.stop()
