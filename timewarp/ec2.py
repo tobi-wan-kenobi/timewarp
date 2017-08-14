@@ -16,7 +16,7 @@ class Session(object):
         cls.resources[name] = cls.resources.get(name, boto3.resource(name))
         return cls.resources[name]
 
-class Snapshot(timewarp.adapter.Snapshot):
+class Checkpoint(timewarp.adapter.Checkpoint):
     pass
 
 class VirtualMachine(timewarp.adapter.VirtualMachine):
@@ -29,44 +29,44 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
         except Exception:
             raise timewarp.exceptions.NoSuchVirtualMachine()
 
-    def list_snapshots(self):
+    def list_checkpoints(self):
         retval = {}
         paginator = Session.client("ec2").get_paginator("describe_snapshots")
         it = paginator.paginate(
             Filters=[
-                {"Name": "tag-key", "Values": ["timewarp:snapshot_id"]},
+                {"Name": "tag-key", "Values": ["timewarp:checkpoint_id"]},
                 {"Name": "tag:timewarp:instance", "Values":[self._inst.id]},
             ],
         )
         for data in it:
             for snapshot in data["Snapshots"]:
-                snapshot_id = next((tag["Value"] for tag in snapshot["Tags"] if tag["Key"] == "timewarp:snapshot_id"), None)
-                if snapshot_id:
-                    temp = retval.get(snapshot_id, Snapshot(snapshot_id))
+                cid = next((tag["Value"] for tag in snapshot["Tags"] if tag["Key"] == "timewarp:checkpoint_id"), None)
+                if cid:
+                    temp = retval.get(cid, Checkpoint(cid))
                     temp.time = snapshot["StartTime"]
                     retval[temp.id] = temp
 
         return sorted(retval.itervalues(), key=lambda b: b.time)
 
-    def create_snapshot(self, name=None):
-        snapshot = Snapshot()
+    def create_checkpoint(self, name=None):
+        checkpoint = Checkpoint()
         self._inst.reload()
         for volume in self._inst.volumes.all():
             snap = volume.create_snapshot()
             snap.create_tags(
                 Tags=[
                     {"Key": "timewarp:instance", "Value": self._inst.id},
-                    {"Key": "timewarp:snapshot_id", "Value": snapshot.id},
+                    {"Key": "timewarp:checkpoint_id", "Value": checkpoint.id},
                     {"Key": "timewarp:volume_id", "Value": volume.id},
-                    {"Key": "Name", "Value": "Timewarp Snapshot"}
+                    {"Key": "Name", "Value": "Timewarp Checkpoint"}
                 ]
             )
             if name:
                 snap.create_tags(Tags=[{"Key": "timewarp:name", "Value": name}])
-            snapshot.time = snap.start_time
-        return snapshot
+            checkpoint.time = snap.start_time
+        return checkpoint 
 
-    def restore_snapshot(self, snapshot, force=False):
+    def restore_checkpoint(self, checkpoint, force=False):
         pass
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

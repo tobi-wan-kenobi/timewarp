@@ -11,27 +11,27 @@ class TestEc2List(unittest.TestCase):
         self.boto3 = mock_boto3.Boto3Mock()
 
         self.someInstanceId = "i-123456789"
-        self.someSnapshotId = "12345"
+        self.someCheckpointId = "12345"
         tags = [
-                {"Key": "timewarp:snapshot_id", "Value": self.someSnapshotId},
+                {"Key": "timewarp:checkpoint_id", "Value": self.someCheckpointId},
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
         ]
-        self.someSnapshot = {"StartTime": datetime.datetime(2016, 1, 1), "Tags": tags}
-        self.earliestSnapshot = {"StartTime": datetime.datetime(2016, 1, 1),
+        self.someEC2Snapshot = {"StartTime": datetime.datetime(2016, 1, 1), "Tags": tags}
+        self.earliestEC2Snapshot = {"StartTime": datetime.datetime(2016, 1, 1),
             "Tags": [
-                {"Key": "timewarp:snapshot_id", "Value": "1"},
+                {"Key": "timewarp:checkpoint_id", "Value": "1"},
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
             ]
         }
-        self.earlierSnapshot = {"StartTime": datetime.datetime(2016, 1, 10),
+        self.earlierEC2Snapshot = {"StartTime": datetime.datetime(2016, 1, 10),
             "Tags": [
-                {"Key": "timewarp:snapshot_id", "Value": "4"},
+                {"Key": "timewarp:checkpoint_id", "Value": "4"},
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
             ]
         }
-        self.latestSnapshot = {"StartTime": datetime.datetime(2017, 1, 10),
+        self.latestEC2Snapshot = {"StartTime": datetime.datetime(2017, 1, 10),
             "Tags": [
-                {"Key": "timewarp:snapshot_id", "Value": "3"},
+                {"Key": "timewarp:checkpoint_id", "Value": "3"},
                 {"Key": "timewarp:instance", "Value": self.someInstanceId},
             ]
         }
@@ -39,24 +39,24 @@ class TestEc2List(unittest.TestCase):
     def tearDown(self):
         self.boto3.teardown()
 
-    def test_listSingleSnapshot(self):
+    def test_listSingleCheckpoint(self):
         self.boto3.paginator().paginate.return_value = [{
-            "Snapshots": [ self.someSnapshot ]
+            "Snapshots": [ self.someEC2Snapshot ]
         }]
         vm = timewarp.ec2.VirtualMachine(self.someInstanceId)
-        snapshots = vm.list_snapshots()
-        self.assertEquals(1, len(snapshots))
-        self.assertEquals(self.someSnapshotId, snapshots[0].id)
+        checkpoints = vm.list_checkpoints()
+        self.assertEquals(1, len(checkpoints))
+        self.assertEquals(self.someCheckpointId, checkpoints[0].id)
 
-    def test_listMultipleSnapshots(self):
+    def test_listMultipleCheckpoints(self):
         self.boto3.paginator().paginate.return_value = [{
-            "Snapshots": [self.latestSnapshot, self.earliestSnapshot, self.earlierSnapshot]
+            "Snapshots": [self.latestEC2Snapshot, self.earliestEC2Snapshot, self.earlierEC2Snapshot]
         }]
         vm = timewarp.ec2.VirtualMachine(self.someInstanceId)
-        snapshots = vm.list_snapshots()
-        self.assertEquals(3, len(snapshots))
-        self.assertEquals(snapshots[0].time, self.earliestSnapshot["StartTime"])
-        self.assertEquals(snapshots[1].time, self.earlierSnapshot["StartTime"])
-        self.assertEquals(snapshots[2].time, self.latestSnapshot["StartTime"])
+        checkpoints = vm.list_checkpoints()
+        self.assertEquals(3, len(checkpoints))
+        self.assertEquals(checkpoints[0].time, self.earliestEC2Snapshot["StartTime"])
+        self.assertEquals(checkpoints[1].time, self.earlierEC2Snapshot["StartTime"])
+        self.assertEquals(checkpoints[2].time, self.latestEC2Snapshot["StartTime"])
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

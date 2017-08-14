@@ -10,16 +10,16 @@ class TestEmptyAdapter(unittest.TestCase):
     def setUp(self):
         self.vm = EmptyVirtualMachine()
 
-    def test_createSnapshotRaises(self):
+    def test_createCheckpointRaises(self):
         with self.assertRaises(timewarp.exceptions.NotImplemented):
-            self.vm.create_snapshot()
+            self.vm.create_checkpoint()
 
-    def test_restoreSnapshotRaises(self):
+    def test_restoreCheckpointRaises(self):
         with self.assertRaises(timewarp.exceptions.NotImplemented):
-            self.vm.restore_snapshot(None)
+            self.vm.restore_checkpoint(None)
 
-    def test_listSnapshotsRaises(self):
+    def test_listCheckpointsRaises(self):
         with self.assertRaises(timewarp.exceptions.NotImplemented):
-            self.vm.list_snapshots()
+            self.vm.list_checkpoints()
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

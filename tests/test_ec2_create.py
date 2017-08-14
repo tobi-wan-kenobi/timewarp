@@ -13,7 +13,7 @@ class TestEc2Create(unittest.TestCase):
         self.snapshot = mock.Mock()
 
         self.someInstanceId = "i-123abc"
-        self.anySnapshotName = "sample snapshot name"
+        self.anyCheckpointName = "sample checkpoint name"
 
         self.volume.id = "vol-abcdef"
         self.volume.create_snapshot.return_value = self.snapshot
@@ -22,28 +22,28 @@ class TestEc2Create(unittest.TestCase):
     def tearDown(self):
         self.boto3.teardown()
 
-    def test_createSingleVolumeSnapshot(self):
+    def test_createSingleVolumeCheckpoint(self):
         volumes = [self.volume]
         self.boto3.Instance(self.someInstanceId).volumes.all.return_value = volumes
-        snap = timewarp.ec2.VirtualMachine(self.someInstanceId).create_snapshot()
+        snap = timewarp.ec2.VirtualMachine(self.someInstanceId).create_checkpoint()
         self.volume.create_snapshot.assert_called_once()
         self.snapshot.create_tags.assert_called()
         self.assertTrue({"Key": "timewarp:instance", "Value": self.someInstanceId} in self.snapshot.create_tags.call_args[1]["Tags"])
-        self.assertTrue({"Key": "timewarp:snapshot_id", "Value": snap.id} in self.snapshot.create_tags.call_args[1]["Tags"])
+        self.assertTrue({"Key": "timewarp:checkpoint_id", "Value": snap.id} in self.snapshot.create_tags.call_args[1]["Tags"])
         self.assertTrue({"Key": "timewarp:volume_id", "Value": self.volume.id} in self.snapshot.create_tags.call_args[1]["Tags"])
 
-    def test_createNamedSnapshot(self):
+    def test_createNamedCheckpoint(self):
         volumes = [self.volume]
         self.boto3.Instance(self.someInstanceId).volumes.all.return_value = volumes
-        snap = timewarp.ec2.VirtualMachine(self.someInstanceId).create_snapshot(self.anySnapshotName)
+        snap = timewarp.ec2.VirtualMachine(self.someInstanceId).create_checkpoint(self.anyCheckpointName)
         self.volume.create_snapshot.assert_called_once()
         self.snapshot.create_tags.assert_called()
         self.assertTrue({"Key": "timewarp:instance", "Value": self.someInstanceId} in self.snapshot.create_tags.call_args_list[0][1]["Tags"])
-        self.assertTrue({"Key": "timewarp:snapshot_id", "Value": snap.id} in self.snapshot.create_tags.call_args_list[0][1]["Tags"])
+        self.assertTrue({"Key": "timewarp:checkpoint_id", "Value": snap.id} in self.snapshot.create_tags.call_args_list[0][1]["Tags"])
         self.assertTrue({"Key": "timewarp:volume_id", "Value": self.volume.id} in self.snapshot.create_tags.call_args_list[0][1]["Tags"])
-        self.assertTrue({"Key": "timewarp:name", "Value": self.anySnapshotName} in self.snapshot.create_tags.call_args_list[1][1]["Tags"])
+        self.assertTrue({"Key": "timewarp:name", "Value": self.anyCheckpointName} in self.snapshot.create_tags.call_args_list[1][1]["Tags"])
 
-    def test_createMultiVolumeSnapshot(self):
+    def test_createMultiVolumeCheckpoint(self):
         volumes = []
         snapshots = []
         for i in range(10):
@@ -55,7 +55,7 @@ class TestEc2Create(unittest.TestCase):
             snapshots.append(s)
 
         self.boto3.Instance(self.someInstanceId).volumes.all.return_value = volumes
-        timewarp.ec2.VirtualMachine(self.someInstanceId).create_snapshot()
+        timewarp.ec2.VirtualMachine(self.someInstanceId).create_checkpoint()
 
         for v in volumes:
             v.create_snapshot.assert_called_once()
