@@ -7,6 +7,7 @@ class Boto3Mock(object):
         self._session = mock.patch("timewarp.ec2.Session").start()
 
         self._instances = {}
+        self._volumes = {}
 
         self._resource = mock.Mock()
         self._resource.Instance = self.Instance
@@ -20,6 +21,21 @@ class Boto3Mock(object):
 
     def paginator(self):
         return self._paginator
+
+    def Volume(self, volume_id):
+        vol = self._volumes.get(volume_id, mock.Mock())
+        self._volumes[volume_id] = vol
+        vol.id = volume_id
+
+        vol.availability_zone = "us-east-1"
+        vol.encrypted = False
+        vol.iops = 100
+        vol.kms_key_id = None
+        vol.size = 10
+        vol.volume_type = "gp2"
+        vol.tags = []
+
+        return vol
 
     def Instance(self, instance_id):
         inst = self._instances.get(instance_id, mock.Mock())
