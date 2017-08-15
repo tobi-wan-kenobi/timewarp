@@ -11,6 +11,7 @@ class Boto3Mock(object):
 
         self._resource = mock.Mock()
         self._resource.Instance = self.Instance
+        self._resource.Volume = self.Volume
         self._session.resource.return_value = self._resource
 
         self._client = mock.Mock()
