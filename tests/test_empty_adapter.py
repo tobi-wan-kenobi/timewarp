@@ -22,4 +22,8 @@ class TestEmptyAdapter(unittest.TestCase):
         with self.assertRaises(timewarp.exceptions.NotImplemented):
             self.vm.list_checkpoints()
 
+    def test_deleteCheckpointRaises(self):
+        with self.assertRaises(timewarp.exceptions.NotImplemented):
+            self.vm.delete_checkpoint(None)
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

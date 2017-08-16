@@ -16,4 +16,7 @@ class VirtualMachine(object):
     def list_checkpoints(self):
         raise timewarp.exceptions.NotImplemented()
 
+    def delete_checkpoint(self, checkpoint):
+        raise timewarp.exceptions.NotImplemented()
+
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
