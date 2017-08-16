@@ -18,6 +18,18 @@ class Session(object):
         return cls.resources[name]
 
 class Checkpoint(timewarp.adapter.Checkpoint):
+    def delete(self):
+        paginator = Session.client("ec2").get_paginator("describe_snapshots")
+        it = paginator.paginate(
+            Filters=[
+                {"Name": "tag:timewarp:checkpoint_id", "Values": [self.id]},
+            ],
+        )
+        for data in it:
+            for snapshot in data["Snapshots"]:
+                Session.resource("ec2").Snapshot(snapshot["SnapshotId"].delete())
+
+
     def restore_volumes(self):
         volumes = {}
         paginator = Session.client("ec2").get_paginator("describe_snapshots")
@@ -154,5 +166,8 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             self._inst.start()
             waiter = Session.client("ec2").get_waiter("instance_started")
             waiter.wait(InstanceIds=[self._inst.id])
+
+    def delete_checkpoint(self, checkpoint):
+        checkpoint.delete()
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
