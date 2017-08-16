@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import argparse
+import importlib
+
+# to make import work with relative paths when directly
+# checked out from git
+sys.path.insert(0, "{}/..".format(os.path.dirname(os.path.realpath(__file__))))
+
+# timewarp ec2 checkpoint create <instance id>
+# timewarp ec2 checkpoint list <instance id>
+# timewarp ec2 checkpoint restore <instance id> <checkpoint id>
+# timewarp ec2 checkpoint delete <instance id> <checkpoint id>
+def main():
+    parser = argparse.ArgumentParser(description="manage snapshots")
+    sub_parsers = parser.add_subparsers(dest="adapter")
+    for adapter in ["ec2"]:
+        sub_parser = sub_parsers.add_parser(adapter, help="manage {} snapshots".format(adapter.upper()))
+        cmd_parser = sub_parser.add_subparsers(dest="command")
+        for cmd in ["create", "list", "restore", "delete"]:
+            p = cmd_parser.add_parser(cmd)
+            p.add_argument("vm_id", metavar="<vm id>", help="virtual machine ID")
+            if cmd in ["restore", "delete"]:
+                p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint ID")
+
+    args = parser.parse_args()
+
+    module = importlib.import_module("timewarp.{}".format(args.adapter))
+    obj = getattr(module, "VirtualMachine")(args.vm_id)
+
+    if args.command == "create":
+        obj.create_checkpoint() # TODO: optional name
+    if args.command == "list":
+        checkpoints = obj.list_checkpoints()
+        for c in checkpoints:
+            print("[{}] {} {}".format(c.time, c.id, c.name))
+    if args.command == "restore":
+        obj.restore_checkpoint(args.checkpoint_id)
+    if args.command == "delete":
+        obj.delete_checkpoint(args.checkpoint_id)
+
+
+if __name__ == "__main__":
+    main()
+
+# vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

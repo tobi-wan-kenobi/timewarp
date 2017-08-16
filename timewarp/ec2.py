@@ -27,8 +27,7 @@ class Checkpoint(timewarp.adapter.Checkpoint):
         )
         for data in it:
             for snapshot in data["Snapshots"]:
-                Session.resource("ec2").Snapshot(snapshot["SnapshotId"].delete())
-
+                Session.resource("ec2").Snapshot(snapshot["SnapshotId"]).delete()
 
     def restore_volumes(self):
         volumes = {}
@@ -86,9 +85,11 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
         for data in it:
             for snapshot in data["Snapshots"]:
                 cid = next((tag["Value"] for tag in snapshot["Tags"] if tag["Key"] == "timewarp:checkpoint_id"), None)
+                name = next((tag["Value"] for tag in snapshot["Tags"] if tag["Key"] == "timewarp:name"), None)
                 if cid:
                     temp = retval.get(cid, Checkpoint(cid))
                     temp.time = snapshot["StartTime"]
+                    temp.name = name
                     retval[temp.id] = temp
 
         return sorted(retval.itervalues(), key=lambda b: b.time)
@@ -127,7 +128,8 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             checkpoint.time = snap.start_time
         return checkpoint 
 
-    def restore_checkpoint(self, checkpoint, force=False):
+    def restore_checkpoint(self, checkpoint_id, force=False):
+        checkpoint = Checkpoint(checkpoint_id)
         self._inst.reload()
         undo_stack = []
 
@@ -167,7 +169,8 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             waiter = Session.client("ec2").get_waiter("instance_started")
             waiter.wait(InstanceIds=[self._inst.id])
 
-    def delete_checkpoint(self, checkpoint):
+    def delete_checkpoint(self, checkpoint_id):
+        checkpoint = Checkpoint(checkpoint_id)
         checkpoint.delete()
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

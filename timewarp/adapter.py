@@ -5,6 +5,8 @@ import timewarp.exceptions
 class Checkpoint(object):
     def __init__(self, uid=None):
         self.id = uid if uid else str(uuid.uuid4())
+        self.name = None
+        self.time = None
 
 class VirtualMachine(object):
     def create_checkpoint(self, name=None):
