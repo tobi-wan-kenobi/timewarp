@@ -41,7 +41,8 @@ def main():
     if args.command == "restore":
         obj.restore_checkpoint(args.checkpoint_id)
     if args.command == "delete":
-        obj.delete_checkpoint(args.checkpoint_id)
+        for checkpoint_id in args.checkpoint_id.split(","):
+            obj.delete_checkpoint(checkpoint_id)
 
 if __name__ == "__main__":
     main()
