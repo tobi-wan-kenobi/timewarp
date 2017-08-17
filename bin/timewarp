@@ -21,9 +21,11 @@ def main():
         cmd_parser = sub_parser.add_subparsers(dest="command")
         for cmd in ["create", "list", "restore", "delete"]:
             p = cmd_parser.add_parser(cmd)
-            p.add_argument("vm_id", metavar="<vm id>", help="virtual machine ID")
+            p.add_argument("vm_id", metavar="<vm identifier>", help="virtual machine identifier (e.g. instance ID for EC2)")
             if cmd in ["restore", "delete"]:
-                p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint ID")
+                p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint identifier")
+            if cmd in ["create"]:
+                p.add_argument("--name", "-n", metavar="<checkpoint name>", help="(optional) provide a descriptive name for the checkpoint")
 
     args = parser.parse_args()
 
@@ -31,7 +33,7 @@ def main():
     obj = getattr(module, "VirtualMachine")(args.vm_id)
 
     if args.command == "create":
-        obj.create_checkpoint() # TODO: optional name
+        obj.create_checkpoint(args.name)
     if args.command == "list":
         checkpoints = obj.list_checkpoints()
         for c in checkpoints:
@@ -40,7 +42,6 @@ def main():
         obj.restore_checkpoint(args.checkpoint_id)
     if args.command == "delete":
         obj.delete_checkpoint(args.checkpoint_id)
-
 
 if __name__ == "__main__":
     main()
