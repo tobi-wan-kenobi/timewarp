@@ -55,8 +55,8 @@ class TestEc2List(unittest.TestCase):
         vm = timewarp.ec2.VirtualMachine(self.someInstanceId)
         checkpoints = vm.list_checkpoints()
         self.assertEquals(3, len(checkpoints))
-        self.assertEquals(checkpoints[0].time, self.earliestEC2Snapshot["StartTime"])
+        self.assertEquals(checkpoints[0].time, self.latestEC2Snapshot["StartTime"])
         self.assertEquals(checkpoints[1].time, self.earlierEC2Snapshot["StartTime"])
-        self.assertEquals(checkpoints[2].time, self.latestEC2Snapshot["StartTime"])
+        self.assertEquals(checkpoints[2].time, self.earliestEC2Snapshot["StartTime"])
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
