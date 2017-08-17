@@ -23,6 +23,12 @@ class Boto3Mock(object):
     def paginator(self):
         return self._paginator
 
+    def client(self):
+        return self._client
+
+    def resource(self):
+        return self._resource
+
     def Volume(self, volume_id):
         vol = self._volumes.get(volume_id, mock.Mock())
         self._volumes[volume_id] = vol
