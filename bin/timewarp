@@ -23,6 +23,8 @@ def main():
             p = cmd_parser.add_parser(cmd)
             p.add_argument("vm_id", metavar="<vm identifier>", help="virtual machine identifier (e.g. instance ID for EC2)")
             if cmd in ["restore"]:
+                p.add_argument("--force", "-f", action="store_true", help="shut down virtual machine, if it is currently running")
+                p.add_argument("--current", "-c", action="store_true", help="create a snapshot of the current status before reverting")
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint identifier")
             if cmd in ["delete"]:
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="list of checkpoint identifiers", nargs="+")
@@ -41,7 +43,9 @@ def main():
         for c in checkpoints:
             print("[{}] {} {}".format(c.time, c.id, c.name))
     if args.command == "restore":
-        obj.restore_checkpoint(args.checkpoint_id)
+        if args.current:
+            obj.create_checkpoint("timewarp restore checkpoint")
+        obj.restore_checkpoint(args.checkpoint_id, force=args.force)
     if args.command == "delete":
         for checkpoint_id in args.checkpoint_id:
             obj.delete_checkpoint(checkpoint_id)
