@@ -92,7 +92,7 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                     temp.name = name
                     retval[temp.id] = temp
 
-        return sorted(retval.itervalues(), key=lambda b: b.time)
+        return sorted(retval.itervalues(), key=lambda b: b.time, reverse=True)
 
     def create_checkpoint(self, name=None):
         checkpoint = Checkpoint()
@@ -101,6 +101,10 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             if not "Ebs" in dev: continue # skip non EBS volumes
             volume = Session.resource("ec2").Volume(dev["Ebs"]["VolumeId"])
             snap = volume.create_snapshot()
+
+            waiter = Session.client("ec2").get_waiter('snapshot_completed')
+            waiter.wait(SnapshotIds=[snap.id])
+
             snap.create_tags(
                 Tags=[
                     {"Key": "timewarp:device", "Value": dev["DeviceName"]},
