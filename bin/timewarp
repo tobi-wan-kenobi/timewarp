@@ -35,6 +35,7 @@ def main():
             if cmd in ["restore"]:
                 p.add_argument("--force", "-f", action="store_true", help="shut down virtual machine, if it is currently running")
                 p.add_argument("--current", "-c", action="store_true", help="create a snapshot of the current status before reverting")
+                p.add_argument("--keep", "-k", action="store_true", help="do not delete the volumes currently attached to the instance")
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint identifier")
             if cmd in ["delete"]:
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="list of checkpoint identifiers", nargs="+")
@@ -59,7 +60,7 @@ def main():
     if args.command == "restore":
         if args.current:
             obj.create_checkpoint("timewarp restore checkpoint")
-        obj.restore_checkpoint(args.checkpoint_id, force=args.force)
+        obj.restore_checkpoint(args.checkpoint_id, force=args.force, keep=args.keep)
     if args.command == "delete":
         for checkpoint_id in args.checkpoint_id:
             obj.delete_checkpoint(checkpoint_id)

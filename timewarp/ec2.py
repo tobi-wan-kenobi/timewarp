@@ -140,7 +140,7 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                 checkpoint.time = snap.start_time
         return checkpoint 
 
-    def restore_checkpoint(self, checkpoint_id, force=False):
+    def restore_checkpoint(self, checkpoint_id, force=False, keep=False):
         checkpoint = Checkpoint(checkpoint_id)
         self._inst.reload()
         undo_stack = []
@@ -172,9 +172,10 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             waiter = Session.client("ec2").get_waiter("volume_available")
             waiter.wait(VolumeIds=old_volumes)
         for v in old_volumes:
-            emit("deleting volume {}".format(v))
-            if not dryrun:
-                Session.resource("ec2").Volume(v).delete()
+            if not keep:
+                emit("deleting volume {}".format(v))
+                if not dryrun:
+                    Session.resource("ec2").Volume(v).delete()
 
         volume_ids = []
         for dev in volumes:
