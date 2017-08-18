@@ -1,5 +1,10 @@
 # timewarp
 
+[![Build Status](https://travis-ci.org/tobi-wan-kenobi/timewarp.svg?branch=master)](https://travis-ci.org/tobi-wan-kenobi/timewarp)
+[![Code Climate](https://codeclimate.com/github/tobi-wan-kenobi/timewarp/badges/gpa.svg)](https://codeclimate.com/github/tobi-wan-kenobi/timewarp)
+[![Test Coverage](https://codeclimate.com/github/tobi-wan-kenobi/timewarp/badges/coverage.svg)](https://codeclimate.com/github/tobi-wan-kenobi/timewarp/coverage)
+[![Issue Count](https://codeclimate.com/github/tobi-wan-kenobi/timewarp/badges/issue_count.svg)](https://codeclimate.com/github/tobi-wan-kenobi/timewarp)
+
 `timewarp` is a small utility to snapshot and restore your virtual machines in cloud environments. Currently, only Amazon Web Services (AWS) EC2 is supported. It is primarily intended for developers that want to snapshot their instance before doing risky modifications during the development cycle.
 
 I know it goes against the grain of the "virtual machines are cattle, not pets" paradigm of cloud computing, but we developers **do** get attached to our instances occasionally ;)
