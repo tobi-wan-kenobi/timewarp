@@ -2,7 +2,7 @@ import mock
 import unittest
 import datetime
 
-import mock_boto3
+from . import mock_boto3
 
 import timewarp.ec2
 

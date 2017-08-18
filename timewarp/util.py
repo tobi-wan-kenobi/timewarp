@@ -9,7 +9,7 @@ class Event(object):
 callbacks = []
 
 def emit(event):
-    if isinstance(event, basestring):
+    if isinstance(event, str):
         event = Event(event)
     for cb in callbacks:
         cb(event)

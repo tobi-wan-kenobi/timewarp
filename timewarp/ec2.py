@@ -102,7 +102,7 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                     temp.name = name
                     retval[temp.id] = temp
 
-        return sorted(retval.itervalues(), key=lambda b: b.time, reverse=True)
+        return sorted(retval.values(), key=lambda b: b.time, reverse=True)
 
     def create_checkpoint(self, name=None):
         checkpoint = Checkpoint()
