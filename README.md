@@ -11,11 +11,13 @@ Supported Python versions: 2.7, 3.3, 3.4, 3.5, 3.6
 
 I know it goes against the grain of the "virtual machines are cattle, not pets" paradigm of cloud computing, but we developers **do** get attached to our instances occasionally ;)
 
-**IMPORTANT NOTE**: Please do *not* use this software in production environments, for two reasons:
+**IMPORTANT NOTE**: Please only use the tool in development accounts where the loss of resources such as volumes, instances, etc. does not have severe impact.
+
+**IMPORTANT NOTE 2**: Please do *not* use this software in production environments, for two reasons:
 1. AWS offers much superior means to keep your instances healthy (e.g. CloudFormation, Auto Recovery, Elastic Loadbalancing, etc.)
 2. This is a *very* early alpha version of the software and might contain severe bugs. Among other disasters, this tool could inadvertently delete random snapshots, create random volumes and stop random instances. Having said that, I did my best to ensure this doesn't actually happen.
 
-**IMPORTANT NOTE 2**: Due to the fact that this is a very early version, I urge you to test it with an unprivileged read-only user first to ensure it does not delete too much (as part of the recovery process, old volumes are detached and deleted, and instances might get stopped). To emphasize: If you use this tool incorrectly (or if it has stupid bugs), it might delete volumes or stop instances not intended for deletion! You have been warned.
+**IMPORTANT NOTE 3**: Due to the fact that this is a very early version, I urge you to test it with an unprivileged read-only user first to ensure it does not delete too much (as part of the recovery process, old volumes are detached and deleted, and instances might get stopped). To emphasize: If you use this tool incorrectly (or if it has stupid bugs), it might delete volumes or stop instances not intended for deletion! You have been warned.
 
 Having said that, here's how you use it:
 
