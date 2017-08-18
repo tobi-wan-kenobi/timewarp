@@ -14,7 +14,7 @@ class VirtualMachine(object):
     def create_checkpoint(self, name=None):
         raise timewarp.exceptions.NotImplemented()
 
-    def restore_checkpoint(self, checkpoint, force=False, keep=False):
+    def restore_checkpoint(self, checkpoint, force=False, keep_volumes=False):
         raise timewarp.exceptions.NotImplemented()
 
     def list_checkpoints(self):

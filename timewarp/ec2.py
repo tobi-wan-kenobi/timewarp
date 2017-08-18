@@ -20,11 +20,12 @@ class Session(object):
         return cls.resources[name]
 
 class Checkpoint(timewarp.adapter.Checkpoint):
-    def delete(self):
+    def delete(self, instance_id):
         paginator = Session.client("ec2").get_paginator("describe_snapshots")
         it = paginator.paginate(
             Filters=[
                 {"Name": "tag:timewarp:checkpoint_id", "Values": [self.id]},
+                {"Name": "tag:timewarp:instance", "Values": [instance_id]},
             ],
         )
         for data in it:
@@ -63,11 +64,12 @@ class Checkpoint(timewarp.adapter.Checkpoint):
                 emit("creating new volume from snapshot {}".format(snapshot["SnapshotId"]))
                 if not dryrun:
                     volume = Session.client("ec2").create_volume(**specs)
-                    waiter = Session.client("ec2").get_waiter("volume_available")
-                    waiter.wait(VolumeIds=volumes.values())
                 else:
                     volumes[dev] = "vol-<volumeid>"
                 volumes[dev] = volume["VolumeId"]
+        if not dryrun:
+            waiter = Session.client("ec2").get_waiter("volume_available")
+            waiter.wait(VolumeIds=volumes.values())
 
         return volumes
 
@@ -141,12 +143,12 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
         return checkpoint 
 
     # TODO: keep an undo stack in case of errors
-    def restore_checkpoint(self, checkpoint_id, force=False, keep=False):
+    def restore_checkpoint(self, checkpoint_id, force=False, keep_volumes=False):
         checkpoint = Checkpoint(checkpoint_id)
         self._inst.reload()
 
         if self._inst.state["Name"] != "stopped" and not force:
-            raise timewarp.exceptions.InvalidOperation()
+            raise timewarp.exceptions.InvalidOperation("unable to stop instance")
 
         volumes = checkpoint.restore_volumes()
 
@@ -171,7 +173,7 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             waiter = Session.client("ec2").get_waiter("volume_available")
             waiter.wait(VolumeIds=old_volumes)
         for v in old_volumes:
-            if not keep:
+            if not keep_volumes:
                 emit("deleting volume {}".format(v))
                 if not dryrun:
                     Session.resource("ec2").Volume(v).delete()
@@ -190,11 +192,12 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
             emit("starting instance {}".format(self._inst.id))
             if not dryrun:
                 self._inst.start()
-                waiter = Session.client("ec2").get_waiter("instance_started")
+                waiter = Session.client("ec2").get_waiter("instance_running")
                 waiter.wait(InstanceIds=[self._inst.id])
 
     def delete_checkpoint(self, checkpoint_id):
         checkpoint = Checkpoint(checkpoint_id)
-        checkpoint.delete()
+        self._inst.reload()
+        checkpoint.delete(self._inst.id)
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4

@@ -11,6 +11,7 @@ sys.path.insert(0, "{}/..".format(os.path.dirname(os.path.realpath(__file__))))
 
 import timewarp.util
 import timewarp.adapter
+import timewarp.exceptions
 
 def log_event(event):
     print(event)
@@ -34,8 +35,8 @@ def main():
             p.add_argument("vm_id", metavar="<vm identifier>", help="virtual machine identifier (e.g. instance ID for EC2)")
             if cmd in ["restore"]:
                 p.add_argument("--force", "-f", action="store_true", help="shut down virtual machine, if it is currently running")
-                p.add_argument("--current", "-c", action="store_true", help="create a snapshot of the current status before reverting")
-                p.add_argument("--keep", "-k", action="store_true", help="do not delete the volumes currently attached to the instance")
+                p.add_argument("--current-checkpoint", "-c", action="store_true", help="create a snapshot of the current status before reverting")
+                p.add_argument("--keep-volumes", "-k", action="store_true", help="do not delete the volumes currently attached to the instance")
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="checkpoint identifier")
             if cmd in ["delete"]:
                 p.add_argument("checkpoint_id", metavar="<checkpoint id>", help="list of checkpoint identifiers", nargs="+")
@@ -55,12 +56,13 @@ def main():
         obj.create_checkpoint(args.name)
     if args.command == "list":
         checkpoints = obj.list_checkpoints()
+        print("checkpoint-time\tcheckpoint-id\tcheckpoint-name")
         for c in checkpoints:
-            print("[{}] {} {}".format(c.time, c.id, c.name))
+            print("{}\t{}\t{}".format(c.time, c.id, c.name))
     if args.command == "restore":
-        if args.current:
+        if args.current_checkpoint:
             obj.create_checkpoint("timewarp restore checkpoint")
-        obj.restore_checkpoint(args.checkpoint_id, force=args.force, keep=args.keep)
+        obj.restore_checkpoint(args.checkpoint_id, force=args.force, keep_volumes=args.keep_volumes)
     if args.command == "delete":
         for checkpoint_id in args.checkpoint_id:
             obj.delete_checkpoint(checkpoint_id)
@@ -72,9 +74,9 @@ if __name__ == "__main__":
         sys.stderr.write("this command is currently not implemented\n")
     except timewarp.exceptions.NoSuchVirtualMachine:
         sys.stderr.write("no such virtual machine found\n")
-    except timewarp.execeptions.InvalidOperation:
-        sys.stderr.write("failed to execute\n")
-    except BaseException as e:
+    except timewarp.exceptions.InvalidOperation as e:
+        sys.stderr.write("failed to execute: {}\n".format(e))
+    except Exception as e:
         sys.stderr.write("general error: {}\n".format(e))
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
