@@ -66,6 +66,15 @@ def main():
             obj.delete_checkpoint(checkpoint_id)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except timewarp.exceptions.NotImplemented:
+        sys.stderr.write("this command is currently not implemented\n")
+    except timewarp.exceptions.NoSuchVirtualMachine:
+        sys.stderr.write("no such virtual machine found\n")
+    except timewarp.execeptions.InvalidOperation:
+        sys.stderr.write("failed to execute\n")
+    except BaseException as e:
+        sys.stderr.write("general error: {}\n".format(e))
 
 # vim: tabstop=8 expandtab shiftwidth=4 softtabstop=4
