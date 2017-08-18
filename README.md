@@ -33,14 +33,18 @@ Having said that, here's how you use it:
   - start/stop instances (to restore a checkpoint, not required if you manually stop the instance before restoring)
 ```
 # list all checkpoints for a virtual machine
+###########################################
 $ timewarp ec2 list <instance id>
+
 # create a new checkpoint
+###########################################
 $ timewarp ec2 create <instance id>
 # optionally, you can also provide a name for the checkpoint:
 $ timewarp ec2 create [-n|--name <name>] <instance id>
 
 # restore a previous checkpoint - the checkpoint id is retrieved
 # from the "list" command
+###########################################
 $ timewarp ec2 restore <instance id> <checkpoint id>
 # when restoring a checkpoint, you can specify "-k" (or "--keep-volumes")
 # to keep the volumes. Otherwise, the original volumes will be deleted.
@@ -54,6 +58,7 @@ $ timewarp ec2 restore -c <instance id> <checkpoint id>
 $ timewarp ec2 restore -f <instance id> <checkpoint id>
 
 # delete a list of timewarp checkpoints
+###########################################
 $ timewarp ec2 delete <instance id> <checkpoint id> <checkpoint id> ...
 ```
 
