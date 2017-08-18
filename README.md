@@ -19,7 +19,14 @@ Having said that, here's how you use it:
 
 - "checkpoints" are point-in-time snapshots (I wanted to avoid the term "snapshot" as to not create a confusion between timewarp snapshots and AWS EC2 snapshots)
 - "virtual machines" are instances
-
+- The tool requires `boto3` to be installed and configured
+- Required AWS permissions:
+  - list snapshots
+  - create snapshots (to create a checkpoint)
+  - create volumes (to restore a checkpoint)
+  - delete snapshots (to delete a checkpoint)
+  - delete volumes (to restore a checkpoint, not required if you are using `--keep-volume`)
+  - start/stop instances (to restore a checkpoint, not required if you manually stop the instance before restoring)
 ```
 # list all checkpoints for a virtual machine
 $ timewarp ec2 list <instance id>
