@@ -2,6 +2,8 @@ import uuid
 
 import timewarp.exceptions
 
+dryrun = False
+
 class Checkpoint(object):
     def __init__(self, uid=None):
         self.id = uid if uid else str(uuid.uuid4())

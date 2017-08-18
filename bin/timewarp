@@ -9,12 +9,22 @@ import importlib
 # checked out from git
 sys.path.insert(0, "{}/..".format(os.path.dirname(os.path.realpath(__file__))))
 
+import timewarp.util
+import timewarp.adapter
+
+def log_event(event):
+    print(event)
+
 # timewarp ec2 checkpoint create <instance id>
 # timewarp ec2 checkpoint list <instance id>
 # timewarp ec2 checkpoint restore <instance id> <checkpoint id>
 # timewarp ec2 checkpoint delete <instance id> <checkpoint id>
 def main():
     parser = argparse.ArgumentParser(description="manage snapshots")
+
+    parser.add_argument("--dry-run", "-d", action="store_true", help="run in dry-run mode")
+    parser.add_argument("--verbose", "-v", action="store_true", help="run in verbose mode")
+
     sub_parsers = parser.add_subparsers(dest="adapter")
     for adapter in ["ec2"]:
         sub_parser = sub_parsers.add_parser(adapter, help="manage {} snapshots".format(adapter.upper()))
@@ -32,6 +42,10 @@ def main():
                 p.add_argument("--name", "-n", metavar="<checkpoint name>", help="(optional) provide a descriptive name for the checkpoint")
 
     args = parser.parse_args()
+
+    if args.dry_run or args.verbose:
+        timewarp.util.register(log_event)
+    timewarp.adapter.dryrun = args.dry_run
 
     module = importlib.import_module("timewarp.{}".format(args.adapter))
     obj = getattr(module, "VirtualMachine")(args.vm_id)

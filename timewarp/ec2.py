@@ -2,6 +2,8 @@ import json
 import boto3
 
 import timewarp.adapter
+from timewarp.adapter import dryrun
+from timewarp.util import emit
 
 class Session(object):
     clients = {}
@@ -27,7 +29,9 @@ class Checkpoint(timewarp.adapter.Checkpoint):
         )
         for data in it:
             for snapshot in data["Snapshots"]:
-                Session.resource("ec2").Snapshot(snapshot["SnapshotId"]).delete()
+                emit("deleting snapshot {} for checkpoint {}".format(snapshot["SnapshotId"], self.id))
+                if not dryrun:
+                    Session.resource("ec2").Snapshot(snapshot["SnapshotId"]).delete()
 
     def restore_volumes(self):
         volumes = {}
@@ -56,10 +60,14 @@ class Checkpoint(timewarp.adapter.Checkpoint):
                 del specs["Tags"]
                 specs["SnapshotId"] = snapshot["SnapshotId"]
 
-                volume = Session.client("ec2").create_volume(**specs)
+                emit("creating new volume from snapshot {}".format(snapshot["SnapshotId"]))
+                if not dryrun:
+                    volume = Session.client("ec2").create_volume(**specs)
+                    waiter = Session.client("ec2").get_waiter("volume_available")
+                    waiter.wait(VolumeIds=volumes.values())
+                else:
+                    volumes[dev] = "vol-<volumeid>"
                 volumes[dev] = volume["VolumeId"]
-        waiter = Session.client("ec2").get_waiter("volume_available")
-        waiter.wait(VolumeIds=volumes.values())
 
         return volumes
 
@@ -100,36 +108,36 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
         for dev in self._inst.block_device_mappings:
             if not "Ebs" in dev: continue # skip non EBS volumes
             volume = Session.resource("ec2").Volume(dev["Ebs"]["VolumeId"])
-            snap = volume.create_snapshot()
+            emit("creating new snapshot from volume {} for instance {}".format(dev["Ebs"]["VolumeId"], self._inst.id))
+            if not dryrun:
+                snap = volume.create_snapshot()
+                waiter = Session.client("ec2").get_waiter('snapshot_completed')
+                waiter.wait(SnapshotIds=[snap.id])
 
-            waiter = Session.client("ec2").get_waiter('snapshot_completed')
-            waiter.wait(SnapshotIds=[snap.id])
+                snap.create_tags(
+                    Tags=[
+                        {"Key": "timewarp:device", "Value": dev["DeviceName"]},
+                        {"Key": "timewarp:instance", "Value": self._inst.id},
+                        {"Key": "timewarp:checkpoint_id", "Value": checkpoint.id},
+                        {"Key": "timewarp:volume_id", "Value": volume.id},
+                        {"Key": "Name", "Value": "Timewarp Checkpoint"},
+                    ]
+                )
+                if name:
+                    snap.create_tags(Tags=[{"Key": "timewarp:name", "Value": name}])
 
-            snap.create_tags(
-                Tags=[
-                    {"Key": "timewarp:device", "Value": dev["DeviceName"]},
-                    {"Key": "timewarp:instance", "Value": self._inst.id},
-                    {"Key": "timewarp:checkpoint_id", "Value": checkpoint.id},
-                    {"Key": "timewarp:volume_id", "Value": volume.id},
-                    {"Key": "Name", "Value": "Timewarp Checkpoint"},
-                ]
-            )
-            if name:
-                snap.create_tags(Tags=[{"Key": "timewarp:name", "Value": name}])
-
-            snap.create_tags(Tags=[
-                {"Key": "timewarp:device_specs", "Value": json.dumps({
-                    "AvailabilityZone": volume.availability_zone,
-                    "Encrypted": volume.encrypted,
-                    "Iops": volume.iops,
-                    "KmsKeyId": volume.kms_key_id,
-                    "Size": volume.size,
-                    "VolumeType": volume.volume_type,
-                    "Tags": volume.tags,
-                })},
-            ])
-
-            checkpoint.time = snap.start_time
+                snap.create_tags(Tags=[
+                    {"Key": "timewarp:device_specs", "Value": json.dumps({
+                        "AvailabilityZone": volume.availability_zone,
+                        "Encrypted": volume.encrypted,
+                        "Iops": volume.iops,
+                        "KmsKeyId": volume.kms_key_id,
+                        "Size": volume.size,
+                        "VolumeType": volume.volume_type,
+                        "Tags": volume.tags,
+                    })},
+                ])
+                checkpoint.time = snap.start_time
         return checkpoint 
 
     def restore_checkpoint(self, checkpoint_id, force=False):
@@ -144,34 +152,46 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
 
         needs_start = False
         if self._inst.state["Name"] != "stopped":
-            self._inst.stop()
-            waiter = Session.client("ec2").get_waiter("instance_stopped")
-            waiter.wait(InstanceIds=[self._inst.id])
+            emit("stopping instance {}".format(self._inst.id))
+            if not dryrun:
+                self._inst.stop()
+                waiter = Session.client("ec2").get_waiter("instance_stopped")
+                waiter.wait(InstanceIds=[self._inst.id])
             needs_start = True
             # TODO: add to undo list
 
         old_volumes = []
         for dev in self._inst.block_device_mappings:
             if not "Ebs" in dev: continue
-            self._inst.detach_volume(VolumeId=dev["Ebs"]["VolumeId"])
+            emit("detaching volume {} from instance {}".format(dev["Ebs"]["VolumeId"], self._inst.id))
+            if not dryrun:
+                self._inst.detach_volume(VolumeId=dev["Ebs"]["VolumeId"])
             old_volumes.append(dev["Ebs"]["VolumeId"])
 
-        waiter = Session.client("ec2").get_waiter("volume_available")
-        waiter.wait(VolumeIds=old_volumes)
+        if not dryrun:
+            waiter = Session.client("ec2").get_waiter("volume_available")
+            waiter.wait(VolumeIds=old_volumes)
         for v in old_volumes:
-            Session.resource("ec2").Volume(v).delete()
+            emit("deleting volume {}".format(v))
+            if not dryrun:
+                Session.resource("ec2").Volume(v).delete()
 
         volume_ids = []
         for dev in volumes:
-            self._inst.attach_volume(Device=dev, VolumeId=volumes[dev])
+            emit("attaching volume {} as {} to instance {}".format(volumes[dev], dev, self._inst.id))
+            if not dryrun:
+                self._inst.attach_volume(Device=dev, VolumeId=volumes[dev])
             volume_ids.append(volumes[dev])
-        waiter = Session.client("ec2").get_waiter("volume_in_use")
-        waiter.wait(VolumeIds=volume_ids)
+        if not dryrun:
+            waiter = Session.client("ec2").get_waiter("volume_in_use")
+            waiter.wait(VolumeIds=volume_ids)
 
         if needs_start:
-            self._inst.start()
-            waiter = Session.client("ec2").get_waiter("instance_started")
-            waiter.wait(InstanceIds=[self._inst.id])
+            emit("starting instance {}".format(self._inst.id))
+            if not dryrun:
+                self._inst.start()
+                waiter = Session.client("ec2").get_waiter("instance_started")
+                waiter.wait(InstanceIds=[self._inst.id])
 
     def delete_checkpoint(self, checkpoint_id):
         checkpoint = Checkpoint(checkpoint_id)
