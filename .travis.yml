@@ -1,0 +1,12 @@
+language: python
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+install:
+  - pip install -U coverage==4.3
+  - pip install codeclimate-test-reporter
+script:
+  - nosetests -v --with-coverage --cover-erase tests/
