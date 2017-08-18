@@ -27,6 +27,7 @@ $ timewarp ec2 list <instance id>
 $ timewarp ec2 create <instance id>
 # optionally, you can also provide a name for the checkpoint:
 $ timewarp ec2 create [-n|--name <name>] <instance id>
+
 # restore a previous checkpoint - the checkpoint id is retrieved
 # from the "list" command
 $ timewarp ec2 restore <instance id> <checkpoint id>
@@ -40,6 +41,7 @@ $ timewarp ec2 restore -c <instance id> <checkpoint id>
 # be stopped for that). In order to automatically stop and restart the instance,
 # specify "-f" or "--force" to the call:
 $ timewarp ec2 restore -f <instance id> <checkpoint id>
+
 # delete a list of timewarp checkpoints
 $ timewarp ec2 delete <instance id> <checkpoint id> <checkpoint id> ...
 ```

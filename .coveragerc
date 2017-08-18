@@ -1,0 +1,9 @@
+[run]
+omit =
+        tests/*
+        *mock*
+        *funcsigs*
+        *pbr*
+        /usr/lib*
+
+[report]
