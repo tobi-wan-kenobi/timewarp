@@ -140,10 +140,10 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                 checkpoint.time = snap.start_time
         return checkpoint 
 
+    # TODO: keep an undo stack in case of errors
     def restore_checkpoint(self, checkpoint_id, force=False, keep=False):
         checkpoint = Checkpoint(checkpoint_id)
         self._inst.reload()
-        undo_stack = []
 
         if self._inst.state["Name"] != "stopped" and not force:
             raise timewarp.exceptions.InvalidOperation()
@@ -158,7 +158,6 @@ class VirtualMachine(timewarp.adapter.VirtualMachine):
                 waiter = Session.client("ec2").get_waiter("instance_stopped")
                 waiter.wait(InstanceIds=[self._inst.id])
             needs_start = True
-            # TODO: add to undo list
 
         old_volumes = []
         for dev in self._inst.block_device_mappings:
