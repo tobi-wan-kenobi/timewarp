@@ -10,3 +10,7 @@ install:
   - pip install codeclimate-test-reporter
 script:
   - nosetests -v --with-coverage --cover-erase tests/
+  - CODECLIMATE_REPO_TOKEN=1d0b1d54b6a5760ecf3724dc587829d246880f2ce388a6b3f9b84beaf4309b20 codeclimate-test-reporter
+addons:
+  code_climate:
+    repo_token: 1d0b1d54b6a5760ecf3724dc587829d246880f2ce388a6b3f9b84beaf4309b20
