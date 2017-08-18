@@ -11,7 +11,7 @@ I know it goes against the grain of the "virtual machines are cattle, not pets" 
 
 **IMPORTANT NOTE**: Please do *not* use this software in production environments, for two reasons:
 1. AWS offers much superior means to keep your instances healthy (e.g. CloudFormation, Auto Recovery, Elastic Loadbalancing, etc.)
-2. This is a *very* early version of the software and might contain severe bugs.
+2. This is a *very* early alpha version of the software and might contain severe bugs. Among other disasters, this tool could inadvertently delete random snapshots, create random volumes and stop random instances. Having said that, I did my best to ensure this doesn't actually happen.
 
 **IMPORTANT NOTE 2**: Due to the fact that this is a very early version, I urge you to test it with an unprivileged read-only user first to ensure it does not delete too much (as part of the recovery process, old volumes are detached and deleted, and instances might get stopped). To emphasize: If you use this tool incorrectly (or if it has stupid bugs), it might delete volumes or stop instances not intended for deletion! You have been warned.
 
@@ -50,6 +50,8 @@ All commands also support a "dry-run" flag (`-d|--dry-run`) and a "verbose" flag
 
 # Important restrictions
 * Only EBS volumes are snapshotted
+* The instance still has to exist (i.e. recovering a deleted instance is not possible using this tool)
+* Completely untested alpha software
 
 # Example usage
 Here are some examples for a three-volume instance:
@@ -95,3 +97,5 @@ checkpoint-time checkpoint-id   checkpoint-name
 - Upload to pypi
 - Show instance id when listing checkpoints
 - Provide more feedback during operation
+- Bash completion
+- Support for other clouds
