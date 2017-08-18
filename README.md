@@ -57,8 +57,9 @@ $ timewarp ec2 delete <instance id> <checkpoint id> <checkpoint id> ...
 
 All commands also support a "dry-run" flag (`-d|--dry-run`) and a "verbose" flag (`-v|--verbose`). In dry-run mode, no destructive action (stopping a VM, deleting a snapshot, deleting or detaching a volume) **should** be performed - but as always: Please beware of bugs!
 
-# Important restrictions
+# Known restrictions and bugs
 * Only EBS volumes are snapshotted
+* "Delete on termination" settings for volumes get lost - **after a restore, your volumes will NOT be automatically deleted on instance termination anymore!** The reason for this: I couldn't figure out how to set this via boto3.
 * The instance still has to exist (i.e. recovering a deleted instance is not possible using this tool)
 * Completely untested alpha software
 
